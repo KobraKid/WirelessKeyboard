@@ -6,9 +6,14 @@
 
 grammar grammar;
 
-public <letter> = (a | bee | sea | dee | ee | ef | gee | aitch | eye | jay | kay | ell | em
+<letter> = (a | bee | sea | dee | ee | ef | gee | aitch | eye | jay | kay | ell | em
 				   | en | oh | pee | cue | are | ess | tee | you | vee | ex | why | zee);
-public <w> = (double you);
-public <metachar> = (shift | control | alt | tab | escape | cap | windows | enter | backspace | delete | space);
-public <command> = (/8/ press |/1/ hold |/1/ release) (<letter> | <w> | <metachar> | all);
+<w> = (double you);
+<number> = (zero | one | two | three | four | five | six | seven | eight | nine);
+<symbol> = (grave | equals | minus | semicolon | comma | quote | period | slash);
+<util> = (shift | control | alt);
+<metachar> = (<util> | tab | escape | cap | windows | enter | backspace | delete | space);
+<command> = (/8/ press |/1/ hold |/1/ release) (<letter> | <w> | <metachar> | all);
 public <control> = mute;
+public <keypress> = (/10/ <letter> |/10/ <w> |/7/ <number> |/4/ <symbol> |/5/ <metachar> |/5/ <command>);
+public <combo> = (/10/ <util>+ <letter> |/10/ <util>+ <w> |/9/ <util>+ <number> |/6/ <util>+ <symbol> |/4/ <util>+ <metachar>); 

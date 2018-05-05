@@ -44,6 +44,34 @@ class Keyboard {
         letters.put("zee", KeyEvent.VK_Z);
     }
 	
+	private static Map<String, Integer> numbers;
+	static {
+		numbers = new HashMap<String, Integer>();
+		numbers.put("zero", KeyEvent.VK_0);
+		numbers.put("one", KeyEvent.VK_1);
+		numbers.put("two", KeyEvent.VK_2);
+		numbers.put("three", KeyEvent.VK_3);
+		numbers.put("four", KeyEvent.VK_4);
+		numbers.put("five", KeyEvent.VK_5);
+		numbers.put("six", KeyEvent.VK_6);
+		numbers.put("seven", KeyEvent.VK_7);
+		numbers.put("eight", KeyEvent.VK_8);
+		numbers.put("nine", KeyEvent.VK_9);
+	}
+	
+	private static Map<String, Integer> symbols;
+	static {
+		symbols = new HashMap<String, Integer>();
+		symbols.put("grave", KeyEvent.VK_BACK_QUOTE);
+		symbols.put("equals", KeyEvent.VK_EQUALS);
+		symbols.put("minus", KeyEvent.VK_SUBTRACT);
+		symbols.put("semicolon", KeyEvent.VK_SEMICOLON);
+		symbols.put("comma", KeyEvent.VK_COMMA);
+		symbols.put("quote", KeyEvent.VK_QUOTE);
+		symbols.put("period", KeyEvent.VK_PERIOD);
+		symbols.put("slash", KeyEvent.VK_SLASH);
+	}
+	
 	private static Map<String, Integer> meta;
 	static {
 		meta = new HashMap<String, Integer>();
@@ -107,6 +135,10 @@ class Keyboard {
 				continue;
 			} else if (letters.containsKey(tokens[i])) {
 				keyPresses[i] = letters.get(tokens[i]);
+			} else if (numbers.containsKey(tokens[i])) {
+				keyPresses[i] = numbers.get(tokens[i]);
+			} else if (symbols.containsKey(tokens[i])) {
+				keyPresses[i] = symbols.get(tokens[i]);
 			} else if (meta.containsKey(tokens[i])) {
 				keyPresses[i] = meta.get(tokens[i]);
 			} else if (commands.containsKey(tokens[i])) {
@@ -122,8 +154,21 @@ class Keyboard {
 		boolean hold = false;
 		boolean release = false;
 		boolean press = false;
+		int meta1 = 0;
+		// For use in combos like control-alt-delete
+		// int meta2 = 0;
 		// Perform key presses
 		for (int i = 0; i < keyPresses.length; i++) {
+			if (i < keyPresses.length - 1) {
+				switch (keyPresses[i]) {
+					case KeyEvent.VK_SHIFT:
+					case KeyEvent.VK_CONTROL:
+					case KeyEvent.VK_ALT:
+						meta1 = keyPresses[i];
+						keyPresser.keyPress(meta1);
+						continue;
+				}
+			}
 			if (keyPresses[i] < 4) {
 				switch (keyPresses[i]) {
 					case 0: press = true; break;
@@ -160,6 +205,10 @@ class Keyboard {
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("Invalid key: " + keyPresses[i]);
+			}
+			if (meta1 != 0) {
+				keyPresser.keyRelease(meta1);
+				meta1 = 0;
 			}
 		}
 	}
