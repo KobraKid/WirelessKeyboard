@@ -3,11 +3,11 @@ package model;
 import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 class Keyboard {
 
@@ -60,12 +60,17 @@ class Keyboard {
 		meta.put("space", KeyEvent.VK_SPACE);
 	}
 	
-	private static List<String> commands;
+	private static Map<String, Integer> commands;
 	static {
-		commands = new ArrayList<String>();
-		commands.add("hold");
-		commands.add("press");
-		commands.add("release");
+		commands = new HashMap<String, Integer>();
+		commands.put("press", 0);
+		commands.put("hold", 1);
+		commands.put("release", 2);
+	}
+	
+	private static Map<Integer, Timer> timers;
+	static {
+		timers = new HashMap<Integer, Timer>();
 	}
 	
 	private Robot keyPresser;
@@ -104,24 +109,59 @@ class Keyboard {
 				keyPresses[i] = letters.get(tokens[i]);
 			} else if (meta.containsKey(tokens[i])) {
 				keyPresses[i] = meta.get(tokens[i]);
-			} else if (commands.contains(tokens[i])) {
-				// hold down keys
+			} else if (commands.containsKey(tokens[i])) {
+				keyPresses[i] = commands.get(tokens[i]);
 			}
 		}
+		performKeystrokes(keyPresses);
+		System.out.println(Arrays.toString(tokens));
+		System.out.println(Arrays.toString(keyPresses));
+	}
+	
+	private void performKeystrokes(int[] keyPresses) {
+		boolean hold = false;
+		boolean release = false;
+		boolean press = false;
 		// Perform key presses
 		for (int i = 0; i < keyPresses.length; i++) {
-			if (keyPresses[i] == 0) continue;
+			if (keyPresses[i] < 4) {
+				switch (keyPresses[i]) {
+					case 0: press = true; break;
+					case 1: hold = true; break;
+					case 2: release = true; break;
+				}
+				continue;
+			}
 			try {
-				keyPresser.keyPress(keyPresses[i]);
-				keyPresser.keyRelease(keyPresses[i]);
+				if (hold) {
+					if (!timers.containsKey(keyPresses[i])) {
+						final int keyToRepeat = keyPresses[i];
+						Timer timer = new Timer();
+						timer.schedule(new TimerTask() {
+							@Override
+							public void run() {
+								keyPresser.keyPress(keyToRepeat);
+								keyPresser.keyRelease(keyToRepeat);
+							}
+						}, 500, 33);
+						timers.put(keyPresses[i], timer);
+					}
+					hold = false;
+				} else if (release) {
+					if (timers.containsKey(keyPresses[i])) {
+						Timer old = timers.remove(keyPresses[i]);
+						old.cancel();
+					}
+					release = false;
+				} else {
+					keyPresser.keyPress(keyPresses[i]);
+					keyPresser.keyRelease(keyPresses[i]);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("Invalid key: " + keyPresses[i]);
 			}
 		}
-
-		System.out.println(Arrays.toString(tokens));
-		System.out.println(Arrays.toString(keyPresses));
 	}
 
 }
