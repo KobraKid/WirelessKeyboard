@@ -70,6 +70,8 @@ class Keyboard {
 	
 	private Robot keyPresser;
 	
+	private boolean mute = false;
+	
 	public Keyboard() {
 		try {
 	        keyPresser = new Robot();
@@ -84,28 +86,31 @@ class Keyboard {
 	public void parseText(String input) {
 		String[] tokens = input.split(" ");
 		int[] keyPresses = new int[tokens.length];
-		
 		// Parse key presses
 		for (int i = 0; i < tokens.length; i++) {
+			if (tokens[i].equals("mute"))
+				mute = !mute;
+			if (mute)
+				continue;
 			if (tokens[i].equals("double")) {
 				if (i < tokens.length - 1 && tokens[i + 1].equals("you")) {
 					keyPresses[i] = letters.get(tokens[i] + " " + tokens[i + 1]);
 				} else {
 					continue;
 				}
-			}
-			else if (tokens[i].equals("you") && i > 0 && tokens[i - 1].equals("double")){
+			} else if (tokens[i].equals("you") && i > 0 && tokens[i - 1].equals("double")){
 				continue;
-			}
-			else if (letters.containsKey(tokens[i])) {
+			} else if (letters.containsKey(tokens[i])) {
 				keyPresses[i] = letters.get(tokens[i]);
-			}
-			else if (commands.contains(tokens[i])) {
+			} else if (meta.containsKey(tokens[i])) {
+				keyPresses[i] = meta.get(tokens[i]);
+			} else if (commands.contains(tokens[i])) {
 				// hold down keys
 			}
 		}
 		// Perform key presses
 		for (int i = 0; i < keyPresses.length; i++) {
+			if (keyPresses[i] == 0) continue;
 			try {
 				keyPresser.keyPress(keyPresses[i]);
 				keyPresser.keyRelease(keyPresses[i]);

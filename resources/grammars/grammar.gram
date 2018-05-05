@@ -11,3 +11,4 @@ public <letter> = (a | bee | sea | dee | ee | ef | gee | aitch | eye | jay | kay
 public <w> = (double you);
 public <metachar> = (shift | control | alt | tab | escape | cap | windows | enter | backspace | delete | space);
 public <command> = (/8/ press |/1/ hold |/1/ release) (<letter> | <w> | <metachar> | all);
+public <control> = mute;
