@@ -51,7 +51,7 @@ public class Mouse implements WindowListener {
 	private final float facePortion = 0.2F;
 	private final float eyePortion = 0.12F;
 	private int eyeMask = 0;
-	private boolean hasClicked = false;
+	private int clickTimer = 0;
 
 	public Mouse() {
 		this.init();
@@ -223,9 +223,10 @@ public class Mouse implements WindowListener {
 			Imgproc.rectangle(frame, eyesArray[i].tl(), eyesArray[i].br(), new Scalar(0, 0, 255, 255), 3);
 		}
 
-		if (eyesArray.length == 1) {
+		clickTimer++;
+		if (clickTimer > 30 && eyesArray.length == 1) {
 			eyeMask++;
-			if (!hasClicked && eyeMask > 8) {
+			if (eyeMask == 8) {
 				// Determine which eye is hidden
 				Point eyeCenter = new Point(eyesArray[0].x + (eyesArray[0].width / 2),
 						eyesArray[0].y + (eyesArray[0].height / 2));
@@ -234,8 +235,8 @@ public class Mouse implements WindowListener {
 			}
 		} else {
 			eyeMask = 0;
-			hasClicked = false;
 		}
+//		System.out.println("Timer\t" + clickTimer + "\tMask\t" + eyeMask);
 	}
 
 	private void stopAcquisition() {
@@ -283,7 +284,7 @@ public class Mouse implements WindowListener {
 			mouseMover.mousePress(InputEvent.BUTTON2_MASK);
 			mouseMover.mouseRelease(InputEvent.BUTTON2_MASK);
 		}
-		hasClicked = true;
+		clickTimer = 0;
 	}
 
 	@Override
