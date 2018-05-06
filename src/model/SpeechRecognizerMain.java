@@ -22,6 +22,7 @@ import peripherals.Mouse;
 public class SpeechRecognizerMain {
 
 	private static Keyboard keyboard;
+	static Mouse mouse;
 
 	// Necessary
 	private LiveSpeechRecognizer recognizer;
@@ -255,8 +256,8 @@ public class SpeechRecognizerMain {
 	 */
 	public static void main(String[] args) {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		keyboard = new Keyboard();
-		new Mouse();
+		mouse = new Mouse();
+		keyboard = new Keyboard(mouse);
 		new SpeechRecognizerMain();
 	}
 }

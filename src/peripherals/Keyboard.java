@@ -102,10 +102,12 @@ public class Keyboard {
 	}
 	
 	private Robot keyPresser;
+	private Mouse mouse;
 	
 	private boolean mute = false;
 	
-	public Keyboard() {
+	public Keyboard(Mouse mouse) {
+		this.mouse = mouse;
 		try {
 	        keyPresser = new Robot();
 		} catch (AWTException e) {
@@ -122,6 +124,7 @@ public class Keyboard {
 			if (tokens[i].equals("shutdown"))
 				System.exit(1);
 			if (tokens[i].equals("mute"))
+				this.mouse.startCamera();
 				mute = !mute;
 			if (mute)
 				continue;
