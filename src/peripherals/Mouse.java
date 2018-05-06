@@ -8,6 +8,7 @@ import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
@@ -41,13 +42,16 @@ public class Mouse implements WindowListener {
 	private final int xSpeed = -35, ySpeed = 12;
 	private ScheduledExecutorService timer;
 	private boolean cameraActive;
-	private CascadeClassifier faceCascade;
+	private CascadeClassifier faceCascade, eyeCascade;
 	private int absoluteFaceSize;
+	private int absoluteEyeSize;
 	private int cameraID;
 	// Default 33 (milliseconds)
 	private final int interval = 33;
 	// Default 0.2F (20% of screen)
 	private final float facePortion = 0.2F;
+	private final float eyePortion = 0.12F;
+	private int eyeMask = 0;
 
 	public Mouse() {
 		this.init();
@@ -90,6 +94,8 @@ public class Mouse implements WindowListener {
 		this.capture = new VideoCapture();
 		this.faceCascade = new CascadeClassifier();
 		this.faceCascade.load("resources/haarcascades/haarcascade_frontalface_alt.xml");
+		this.eyeCascade = new CascadeClassifier();
+		this.eyeCascade.load("resources/haarcascades/haarcascade_eye.xml");
 		this.absoluteFaceSize = 0;
 		this.cameraID = 0;
 	}
@@ -161,11 +167,13 @@ public class Mouse implements WindowListener {
 
 	private void detectAndDisplay(Mat frame) {
 		MatOfRect faces = new MatOfRect();
+		MatOfRect eyes = new MatOfRect();
 		Mat grayFrame = new Mat();
 
 		Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
 		Imgproc.equalizeHist(grayFrame, grayFrame);
 
+		// FACE
 		if (this.absoluteFaceSize == 0) {
 			int height = grayFrame.rows();
 			if (Math.round(height * facePortion) > 0) {
@@ -176,10 +184,48 @@ public class Mouse implements WindowListener {
 		this.faceCascade.detectMultiScale(grayFrame, faces, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
 				new Size(this.absoluteFaceSize, this.absoluteFaceSize), new Size());
 
+		// EYES
+		if (this.absoluteEyeSize == 0) {
+			int height = grayFrame.rows();
+			if (Math.round(height * eyePortion) > 0) {
+				this.absoluteEyeSize = Math.round(height * eyePortion);
+			}
+		}
+
+		this.eyeCascade.detectMultiScale(grayFrame, eyes, 1.1, 2, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+				new Size(this.absoluteEyeSize, this.absoluteEyeSize),
+				new Size(this.absoluteEyeSize * 3, this.absoluteEyeSize * 3));
+
+		// DRAWING
 		Rect[] facesArray = faces.toArray();
-		for (int i = 0; i < facesArray.length; i++) {
-			Imgproc.rectangle(frame, facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 0, 255), 3);
-			moveMouseBy((facesArray[i].x + (facesArray[i].width / 2)) - (width / 2), (facesArray[i].y + (facesArray[i].height / 2)) - (height / 2));
+		Rect[] eyesArray = eyes.toArray();
+
+		if (eyesArray.length == 0 || facesArray.length == 0) {
+			return;
+		}
+
+		Rect largestFace = getLargestFace(facesArray);
+		Point faceCenter = new Point(largestFace.x + (largestFace.width / 2), largestFace.y + (largestFace.height / 2));
+		// System.out.println("Face: " + faceCenter.x);
+
+		Imgproc.rectangle(frame, largestFace.tl(), largestFace.br(), new Scalar(0, 255, 0, 255), 3);
+		moveMouseBy(faceCenter.x - (width / 2), faceCenter.y - (height / 2));
+
+		for (int i = 0; i < eyesArray.length; i++) {
+			Imgproc.rectangle(frame, eyesArray[i].tl(), eyesArray[i].br(), new Scalar(0, 0, 255, 255), 3);
+		}
+
+		if (eyesArray.length == 1) {
+			eyeMask++;
+			if (eyeMask > 8) {
+				// Determine which eye is hidden
+				Point eyeCenter = new Point(eyesArray[0].x + (eyesArray[0].width / 2),
+						eyesArray[0].y + (eyesArray[0].height / 2));
+				// System.out.println("Eye: " + eyeCenter.x);
+				clickMouse(eyeCenter.x < faceCenter.x);
+			}
+		} else {
+			eyeMask = 0;
 		}
 	}
 
@@ -201,15 +247,33 @@ public class Mouse implements WindowListener {
 		}
 	}
 
+	private Rect getLargestFace(Rect[] faces) {
+		Rect largest = faces[0];
+		for (int i = 1; i < faces.length; i++) {
+			if (faces[i].size().area() > largest.size().area())
+				largest = faces[i];
+		}
+		return largest;
+	}
+
 	private void updateImageView(BufferedImage image) {
 		this.image.setImage(image);
 		this.image.repaint();
 	}
-	
+
 	private void moveMouseBy(int x, int y) {
-		System.out.println("X\t" + x + "\tY\t" + y);
 		Point p = MouseInfo.getPointerInfo().getLocation();
 		mouseMover.mouseMove(p.x + (x / xSpeed), p.y + (y / ySpeed));
+	}
+
+	private void clickMouse(boolean left) {
+		if (left) {
+			mouseMover.mousePress(InputEvent.BUTTON1_MASK);
+			mouseMover.mouseRelease(InputEvent.BUTTON1_MASK);
+		} else {
+			mouseMover.mousePress(InputEvent.BUTTON2_MASK);
+			mouseMover.mouseRelease(InputEvent.BUTTON2_MASK);
+		}
 	}
 
 	@Override
