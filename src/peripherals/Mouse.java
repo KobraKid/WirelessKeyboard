@@ -3,11 +3,11 @@ package peripherals;
 import java.awt.AWTException;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GraphicsConfiguration;
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Robot;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 
 import org.opencv.core.Mat;
@@ -35,7 +34,7 @@ import utilities.Utils;
 public class Mouse implements WindowListener {
 
 	ImagePanel image;
-	JButton cameraButton;
+	// JButton cameraButton;
 	private Robot mouseMover;
 	private VideoCapture capture;
 	private final int width = 640, height = 480;
@@ -52,6 +51,7 @@ public class Mouse implements WindowListener {
 	private final float facePortion = 0.2F;
 	private final float eyePortion = 0.12F;
 	private int eyeMask = 0;
+	private boolean hasClicked = false;
 
 	public Mouse() {
 		this.init();
@@ -76,18 +76,26 @@ public class Mouse implements WindowListener {
 		image.setPreferredSize(new Dimension(640, 480));
 		frame.add(image);
 
-		cameraButton = new JButton();
-		cameraButton.setPreferredSize(new Dimension(100, 20));
-		cameraButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				startCamera();
-			}
-		});
-		frame.add(cameraButton);
+		// cameraButton = new JButton();
+		// cameraButton.setPreferredSize(new Dimension(100, 20));
+		// cameraButton.addActionListener(new ActionListener() {
+		// @Override
+		// public void actionPerformed(ActionEvent e) {
+		// startCamera();
+		// }
+		// });
+		// frame.add(cameraButton);
 
+		GraphicsConfiguration gc = frame.getGraphicsConfiguration();
+		Rectangle bounds = gc.getBounds();
+		Dimension size = frame.getPreferredSize();
+		frame.setLocation((int) ((bounds.width) - (size.getWidth())), (int) ((bounds.height) - (size.getHeight())));
+
+		frame.setUndecorated(true);
 		frame.pack();
 		frame.setVisible(true);
+
+		startCamera();
 	}
 
 	protected void init() {
@@ -126,7 +134,7 @@ public class Mouse implements WindowListener {
 				this.timer.scheduleAtFixedRate(frameGrabber, 0, interval, TimeUnit.MILLISECONDS);
 
 				// update the button content
-				this.cameraButton.setText("Stop Camera");
+				// this.cameraButton.setText("Stop Camera");
 			} else {
 				// log the error
 				System.err.println("Failed to open the camera connection...");
@@ -136,7 +144,7 @@ public class Mouse implements WindowListener {
 			this.cameraActive = false;
 
 			// update again the button content
-			this.cameraButton.setText("Start Camera");
+			// this.cameraButton.setText("Start Camera");
 
 			// stop the timer
 			this.stopAcquisition();
@@ -217,7 +225,7 @@ public class Mouse implements WindowListener {
 
 		if (eyesArray.length == 1) {
 			eyeMask++;
-			if (eyeMask > 8) {
+			if (!hasClicked && eyeMask > 8) {
 				// Determine which eye is hidden
 				Point eyeCenter = new Point(eyesArray[0].x + (eyesArray[0].width / 2),
 						eyesArray[0].y + (eyesArray[0].height / 2));
@@ -226,6 +234,7 @@ public class Mouse implements WindowListener {
 			}
 		} else {
 			eyeMask = 0;
+			hasClicked = false;
 		}
 	}
 
@@ -274,6 +283,7 @@ public class Mouse implements WindowListener {
 			mouseMover.mousePress(InputEvent.BUTTON2_MASK);
 			mouseMover.mouseRelease(InputEvent.BUTTON2_MASK);
 		}
+		hasClicked = true;
 	}
 
 	@Override
