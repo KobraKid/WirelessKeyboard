@@ -10,10 +10,14 @@ import java.util.logging.Logger;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Port;
 
+import org.opencv.core.Core;
+
 import edu.cmu.sphinx.api.Configuration;
 import edu.cmu.sphinx.api.LiveSpeechRecognizer;
 import edu.cmu.sphinx.api.SpeechResult;
 import edu.cmu.sphinx.result.WordResult;
+import peripherals.Keyboard;
+import peripherals.Mouse;
 
 public class SpeechRecognizerMain {
 
@@ -250,7 +254,9 @@ public class SpeechRecognizerMain {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		keyboard = new Keyboard();
+		new Mouse();
 		new SpeechRecognizerMain();
 	}
 }

@@ -17,3 +17,4 @@ grammar grammar;
 public <control> = mute;
 public <keypress> = (/10/ <letter> |/10/ <w> |/7/ <number> |/4/ <symbol> |/5/ <metachar> |/5/ <command>);
 public <combo> = (/10/ <util>+ <letter> |/10/ <util>+ <w> |/9/ <util>+ <number> |/6/ <util>+ <symbol> |/4/ <util>+ <metachar>); 
+public <quit> = shutdown;
